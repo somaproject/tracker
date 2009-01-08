@@ -1,0 +1,15 @@
+#! /bin/sh
+
+DEBUG_LEVEL=0
+EVENT_SRC=74
+THRESHOLD=0.95
+WIDTH=320
+HEIGHT=240
+
+
+gst-launch-0.10 --gst-debug-level=$DEBUG_LEVEL \
+    v4l2src ! video/x-raw-yuv,width=$WIDTH,height=$HEIGHT,framerate=30/1 ! queue max-size-buffers=1 leaky=2 ! ffmpegcolorspace \
+    ! somasynctracker name=tracker threshold=$THRESHOLD tracker.video_src ! ffmpegcolorspace \
+    ! queue ! timeoverlay ! clockoverlay halignment=right ! textoverlay name=txt ! xvimagesink sync=true \
+    somaeventsource ! soma/event,src=$EVENT_SRC ! somacameraevent ! queue max-size-buffers=1 leaky=2 ! tracker. \
+    tracker.pos_src ! queue ! somapos2text ! text/plain ! txt.text_sink
